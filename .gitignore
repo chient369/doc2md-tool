@@ -1,0 +1,27 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Cấu hình môi trường
+.env
+.venv
+ENV/
+venv/
+
+# Thư mục output chuyển đổi
+/doc_base/
+
+# File cấu hình cá nhân
+convert_config.json
+
+# File hệ thống
+.DS_Store
+Thumbs.db
+
+# VSCode/Cursor
+.vscode/
+.cursorignore
+
+# Metadata
+metadata.md 
