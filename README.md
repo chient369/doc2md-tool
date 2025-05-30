@@ -4,11 +4,14 @@
 CTV Converter là một công cụ dòng lệnh mạnh mẽ giúp chuyển đổi các tài liệu (PDF, Excel, Word, PPTX, ...) thành file Markdown. Công cụ này tích hợp với Cursor AI để thực hiện truy vấn tìm kiếm thông tin dự án dưới nhiều loại files, giúp tối ưu hóa quy trình làm việc và quản lý tài liệu.
 
 ## Yêu cầu hệ thống
-- Python >= 3.10
+- Python >= 3.6 (khuyến nghị Python 3.10+)
 - Pip
 - Git
 
 ## Hướng dẫn cài đặt
+
+Sau khi clone package về local thực hiện  1 trong 2 cách dưới.
+
 ### Cách 1: Cài đặt thủ công (mọi hệ điều hành)
 ```cmd
 pip install .
@@ -42,13 +45,36 @@ powershell ./setup_markitdown.ps1
 Sau khi cài đặt, mở lại terminal (hoặc chạy `source ~/.bashrc` trên Linux/MacOS) để sử dụng lệnh `cvmd` ở bất cứ đâu.
 
 ## Cấu hình
-File `convert_config.json` cho phép cấu hình các định dạng file cần chuyển đổi. Ví dụ:
+File `convert_config.json` cho phép cấu hình các định dạng file cần chuyển đổi và các tùy chọn khác. Ví dụ:
 ```json
 {
-    "file_types": [".pdf", ".xlsx", ".docx", ".pptx", ".xls"],
-    "ignore_patterns": ["*.pdf", "*.xlsx", "*.docx", "*.pptx", "*.xls"]
+    "file_types": [".pdf", ".xlsx", ".docx", ".pptx", ".xls", ".doc", ".xlsm", ".png", ".jpg", ".jpeg"],
+    "ignore_patterns": ["node_modules", "venv", ".venv", "__pycache__", ".git"],
+    "converter_options": {
+        "pdf_ocr": true,
+        "excel_table_format": "markdown",
+        "pptx_extract_notes": true,
+        "pptx_extract_images": false,
+        "output_encoding": "utf-8"
+    }
 }
 ```
+
+### Tùy chọn cấu hình
+
+#### file_types
+Danh sách các định dạng file cần chuyển đổi.
+
+#### ignore_patterns
+Danh sách các thư mục hoặc mẫu file cần bỏ qua khi chuyển đổi và thêm vào `.cursorignore`.
+
+#### converter_options
+Các tùy chọn cho công cụ chuyển đổi MarkItDown:
+- `pdf_ocr`: Bật/tắt OCR cho file PDF (mặc định: true)
+- `excel_table_format`: Định dạng bảng Excel (markdown, html, csv)
+- `pptx_extract_notes`: Trích xuất ghi chú từ file PPTX (mặc định: true)
+- `pptx_extract_images`: Trích xuất hình ảnh từ file PPTX (mặc định: false)
+- `output_encoding`: Mã hóa đầu ra (mặc định: utf-8)
 
 ## Hướng dẫn sử dụng
 ### Chuyển đổi file
@@ -105,7 +131,9 @@ Cursor Rules là tập hợp các quy tắc giúp Cursor AI hiểu cách tìm ki
    - Khi truy vấn trong Cursor, bạn có thể yêu cầu Cursor sử dụng rule này bằng cách đề cập đến tên của nó.
    - Ví dụ: "Sử dụng Document Search Standard để tìm thông tin về [chủ đề] trong tài liệu của tôi."
 
-Để biết thêm chi tiết về nội dung và cách hoạt động của rule, bạn có thể xem trực tiếp file `cursor_rules/docs-search-standard.md`.
+## Lưu ý
+- Công cụ này chỉ hoạt động tốt trên Cursor AI và đã được tối ưu hóa cho môi trường này.
+- Để đạt hiệu quả cao nhất, hãy sử dụng với Cursor AI phiên bản mới nhất.
 
 ## License
 MIT License 
