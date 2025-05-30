@@ -4,6 +4,7 @@ import sys
 import argparse
 from convert_utils import (
     install_package,
+    setup_markitdown,
     load_config,
     update_cursorignore,
     convert_files,
@@ -19,14 +20,21 @@ def parse_arguments():
                       help="Output directory for converted Markdown files (default: doc_base)")
     parser.add_argument("--config", "-c", default="convert_config.json",
                       help="Path to configuration file (default: convert_config.json)")
+    parser.add_argument("--setup-only", action="store_true",
+                      help="Only setup MarkItDown and dependencies without converting files")
     return parser.parse_args()
 
 def main():
     # Parse command line arguments
     args = parse_arguments()
     
-    # Install required packages
-    install_package("markitdown")
+    # Setup MarkItDown with all dependencies
+    setup_markitdown()
+    
+    # If only setup was requested, exit
+    if args.setup_only:
+        print("MarkItDown setup completed. Use 'convert-docs' command to convert files.")
+        return
     
     # Load configuration from file
     config = load_config(args.config)
@@ -50,7 +58,7 @@ def main():
     
     # Update metadata file
     if converted_files:
-        update_metadata_file(output_folder, converted_files)
+        update_metadata_file(project_folder, converted_files)
         print(f"Successfully converted {len(converted_files)} files")
     else:
         print(f"No matching files found in {input_path}")

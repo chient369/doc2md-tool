@@ -17,16 +17,20 @@ Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force
 
 # Function to check if Python is installed and in PATH
 function Check-Python {
-    try {
-        $pythonVersion = & python --version 2>&1
-        if ($pythonVersion -match "Python (\d+\.\d+\.\d+)") {
-            Write-Host "Python is installed: $pythonVersion"
-            return $true
+    # Try multiple possible Python commands
+    foreach ($cmd in @('python', 'py')) {
+        try {
+            $pythonVersion = & $cmd --version 2>&1
+            if ($pythonVersion -match "Python (\d+\.\d+\.\d+)") {
+                Write-Host "Python is installed: $pythonVersion (using $cmd command)"
+                return $true
+            }
+        } catch {
+            # Continue to next command if this one fails
+            continue
         }
-        return $false
-    } catch {
-        return $false
     }
+    return $false
 }
 
 # Function to check if pip is available
