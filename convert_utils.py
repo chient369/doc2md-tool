@@ -148,19 +148,7 @@ def configure_markitdown(config: Optional[Dict[str, Any]] = None) -> Any:
     md = MarkItDown(**settings)
     return md
 
-# ----- Configuration Management -----
-
-def load_config(config_path: str = "convert_config.json") -> Dict[str, Any]:
-    """
-    Load configuration from external JSON file.
-    
-    Args:
-        config_path: Path to the configuration file
-        
-    Returns:
-        Dict containing configuration settings
-    """
-# ----- Configuration Management -----
+# ----- Configuration Management ----
 
 def load_config(config_path: str = "convert_config.json") -> Dict[str, Any]:
     """
