@@ -4,6 +4,7 @@ import importlib.util
 import sys
 import json
 import re
+import re
 from datetime import datetime
 from typing import Dict, List, Optional, Set, Any, Union
 import requests
@@ -31,6 +32,7 @@ def install_package(package_name: str, extras: Optional[str] = None) -> None:
         print(f"Installing {package_spec}...")
         try:
             subprocess.check_call([sys.executable, "-m", "pip", "install", package_spec], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.check_call([sys.executable, "-m", "pip", "install", package_spec], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             print(f"{package_spec} installed successfully")
         except subprocess.CalledProcessError as e:
             print(f"Error installing {package_spec}: {e}")
@@ -41,7 +43,16 @@ def install_package(package_name: str, extras: Optional[str] = None) -> None:
         subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", package_spec], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         print(f"{package_spec} updated successfully")
     return
+        print(f"{package_spec} already installed")
+        # Ensure the package is up to date
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", package_spec], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        print(f"{package_spec} updated successfully")
+    return
 
+def setup_markitdown() -> None:
+    """
+    Setup MarkItDown with all required dependencies and update PATH if needed.
+    """
 def setup_markitdown() -> None:
     """
     Setup MarkItDown with all required dependencies and update PATH if needed.
@@ -93,6 +104,16 @@ def configure_markitdown(config: Optional[Dict[str, Any]] = None) -> Any:
     Returns:
         MarkItDown: Configured MarkItDown instance
     """
+def configure_markitdown(config: Optional[Dict[str, Any]] = None) -> Any:
+    """
+    Configure MarkItDown with optimized settings.
+    
+    Args:
+        config: Optional configuration dictionary containing converter_options
+        
+    Returns:
+        MarkItDown: Configured MarkItDown instance
+    """
     # Ensure markitdown is installed with all extras
     setup_markitdown()
     
@@ -109,7 +130,21 @@ def configure_markitdown(config: Optional[Dict[str, Any]] = None) -> Any:
     if config and "converter_options" in config:
         settings.update(config["converter_options"])
     
+    # Default settings
+    settings = {
+        "pdf_ocr": True,
+        "excel_table_format": "markdown",
+        "pptx_extract_notes": True,
+        "pptx_extract_images": False,
+        "output_encoding": "utf-8"
+    }
+    
+    # Override with settings from config if provided
+    if config and "converter_options" in config:
+        settings.update(config["converter_options"])
+    
     from markitdown import MarkItDown
+    md = MarkItDown(**settings)
     md = MarkItDown(**settings)
     return md
 
@@ -125,7 +160,20 @@ def load_config(config_path: str = "convert_config.json") -> Dict[str, Any]:
     Returns:
         Dict containing configuration settings
     """
+# ----- Configuration Management -----
+
+def load_config(config_path: str = "convert_config.json") -> Dict[str, Any]:
+    """
+    Load configuration from external JSON file.
+    
+    Args:
+        config_path: Path to the configuration file
+        
+    Returns:
+        Dict containing configuration settings
+    """
     default_config = {
+        "file_types": [".pdf", ".xlsx", ".docx", ".pptx", ".xls", ".doc", ".xlsm", ".png", ".jpg", ".jpeg"],
         "file_types": [".pdf", ".xlsx", ".docx", ".pptx", ".xls", ".doc", ".xlsm", ".png", ".jpg", ".jpeg"],
         "ignore_patterns": ["*"]
     }
@@ -148,9 +196,26 @@ def load_config(config_path: str = "convert_config.json") -> Dict[str, Any]:
             print(f"Default configuration saved to {config_path}")
         except Exception as e:
             print(f"Error creating default config file: {e}")
+        try:
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(default_config, f, indent=4)
+            print(f"Default configuration saved to {config_path}")
+        except Exception as e:
+            print(f"Error creating default config file: {e}")
     
     return default_config
 
+# ----- Environment & Project Setup -----
+
+def update_cursorignore(project_folder: str, ignore_patterns: List[str], file_types: List[str]) -> None:
+    """
+    Update or create .cursorignore to exclude original files and folders containing converted files.
+    
+    Args:
+        project_folder: Root folder of the project
+        ignore_patterns: Patterns to ignore
+        file_types: File extensions to ignore
+    """
 # ----- Environment & Project Setup -----
 
 def update_cursorignore(project_folder: str, ignore_patterns: List[str], file_types: List[str]) -> None:
@@ -169,12 +234,16 @@ def update_cursorignore(project_folder: str, ignore_patterns: List[str], file_ty
     
     # Add file types patterns
     for ext in file_types:
+    for ext in file_types:
         patterns_to_add.add(f"*{ext}")
     
     # Add ignore patterns from config
     for pattern in ignore_patterns:
         # Remove * if present
+        # Remove * if present
         clean_pattern = pattern.replace("*", "").replace("/", "\\")
+        if clean_pattern:  # Only add non-empty patterns
+            patterns_to_add.add(clean_pattern)
         if clean_pattern:  # Only add non-empty patterns
             patterns_to_add.add(clean_pattern)
     
@@ -191,6 +260,7 @@ def update_cursorignore(project_folder: str, ignore_patterns: List[str], file_ty
             for pattern in new_patterns:
                 f.write(f"{pattern}\n")
         print(f"Updated .cursorignore with: {', '.join(new_patterns)}")
+        print(f"Updated .cursorignore with: {', '.join(new_patterns)}")
 
     # Update .cursorignore with folders containing converted files (use \\)
     folder_patterns = set()
@@ -201,6 +271,7 @@ def update_cursorignore(project_folder: str, ignore_patterns: List[str], file_ty
                 if l.endswith("\\"):
                     folder_patterns.add(l)
     
+    # Get list of folders from recent conversions (if any)
     # Get list of folders from recent conversions (if any)
     if hasattr(update_cursorignore, "converted_folders"):
         for folder in update_cursorignore.converted_folders:
@@ -213,9 +284,18 @@ def update_cursorignore(project_folder: str, ignore_patterns: List[str], file_ty
                 folder_patterns.add(rel_folder)
         print(f"Added {len(folder_patterns)} folders to .cursorignore")
     # Remove attribute after use
+        print(f"Added {len(folder_patterns)} folders to .cursorignore")
+    # Remove attribute after use
     if hasattr(update_cursorignore, "converted_folders"):
         del update_cursorignore.converted_folders
 
+def update_vscode_settings(output_folder: str) -> None:
+    """
+    Update VS Code settings to exclude the output folder.
+    
+    Args:
+        output_folder: Path to the output folder
+    """
 def update_vscode_settings(output_folder: str) -> None:
     """
     Update VS Code settings to exclude the output folder.
@@ -237,6 +317,11 @@ def update_vscode_settings(output_folder: str) -> None:
                 settings = json.load(f)
         except json.JSONDecodeError:
             print("Warning: Invalid VS Code settings file. Creating a new one.")
+        try:
+            with open(vscode_settings_path, 'r', encoding='utf-8') as f:
+                settings = json.load(f)
+        except json.JSONDecodeError:
+            print("Warning: Invalid VS Code settings file. Creating a new one.")
     
     # Update files.exclude
     files_exclude = settings.get('files.exclude', {})
@@ -251,7 +336,20 @@ def update_vscode_settings(output_folder: str) -> None:
         print(f"Updated VS Code settings to exclude {relative_output_folder}")
     except Exception as e:
         print(f"Error updating VS Code settings: {e}")
+    try:
+        with open(vscode_settings_path, 'w', encoding='utf-8') as f:
+            json.dump(settings, f, indent=4)
+        print(f"Updated VS Code settings to exclude {relative_output_folder}")
+    except Exception as e:
+        print(f"Error updating VS Code settings: {e}")
 
+def update_gitignore(output_folder: str) -> None:
+    """
+    Add the output folder to .gitignore.
+    
+    Args:
+        output_folder: Path to the output folder
+    """
 def update_gitignore(output_folder: str) -> None:
     """
     Add the output folder to .gitignore.
@@ -416,6 +514,11 @@ def convert_files(input_path: str, output_folder: str, file_types: List[str], co
     
     # Configure MarkItDown with settings from config
     md = configure_markitdown(config)
+    # Add cursor rules
+    add_cursor_rules_from_docs()
+    
+    # Configure MarkItDown with settings from config
+    md = configure_markitdown(config)
     
     if not os.path.exists(input_path):
         print(f"Directory {input_path} does not exist")
@@ -423,9 +526,12 @@ def convert_files(input_path: str, output_folder: str, file_types: List[str], co
     
     # Track all converted files for metadata
     converted_files: List[str] = []
+    converted_files: List[str] = []
     # Track all folders containing converted files
     converted_folders: Set[str] = set()
+    converted_folders: Set[str] = set()
     # Track created output directories to avoid redundant checks
+    created_output_dirs: Set[str] = set([output_folder])
     created_output_dirs: Set[str] = set([output_folder])
     
     # Process files recursively through all subfolders
@@ -465,6 +571,7 @@ def convert_files(input_path: str, output_folder: str, file_types: List[str], co
                     continue
                 
                 # Convert file to Markdown
+                # Convert file to Markdown
                 result = md.convert(input_file_path)
                 # Replace all NaN values with empty string
                 result.text_content = result.text_content.replace('NaN', '')
@@ -482,8 +589,22 @@ def convert_files(input_path: str, output_folder: str, file_types: List[str], co
     update_cursorignore.converted_folders = converted_folders
     
     # Return list of converted files
+    # Store converted folders for updating .cursorignore
+    update_cursorignore.converted_folders = converted_folders
+    
+    # Return list of converted files
     return converted_files
 
+# ----- Metadata Management -----
+
+def update_metadata_file(project_folder: str, converted_files: List[str]) -> None:
+    """
+    Create or update metadata.md to store metadata of Markdown files in doc_base folder.
+    
+    Args:
+        project_folder: Root folder of the project
+        converted_files: List of paths to converted files
+    """
 # ----- Metadata Management -----
 
 def update_metadata_file(project_folder: str, converted_files: List[str]) -> None:
@@ -499,11 +620,18 @@ def update_metadata_file(project_folder: str, converted_files: List[str]) -> Non
         return
     
     # Ensure doc_base directory exists
+    # Ensure doc_base directory exists
     doc_base_folder = os.path.join(project_folder, "doc_base")
     if not os.path.exists(doc_base_folder):
         os.makedirs(doc_base_folder)
     
     metadata_file = os.path.join(doc_base_folder, "metadata.md")
+    metadata_lines = [
+        "# Metadata of Markdown Files", 
+        "", 
+        "| Filename | Path | Last Modified |", 
+        "|----------|------|---------------|"
+    ]
     metadata_lines = [
         "# Metadata of Markdown Files", 
         "", 

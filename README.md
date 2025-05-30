@@ -1,4 +1,4 @@
-# CTV Converter
+# Markdown Converter for Cursor AI
 
 ## Giới thiệu
 CTV Converter là một công cụ dòng lệnh mạnh mẽ giúp chuyển đổi các tài liệu (PDF, Excel, Word, PPTX, ...) thành file Markdown. Công cụ này tích hợp với Cursor AI để thực hiện truy vấn tìm kiếm thông tin dự án dưới nhiều loại files, giúp tối ưu hóa quy trình làm việc và quản lý tài liệu.
